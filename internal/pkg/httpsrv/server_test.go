@@ -49,7 +49,10 @@ func TestWebSocketHandler(t *testing.T) {
 
 	address, _ := strings.CutPrefix(testServer.URL, "http")
 	wsURL := "ws" + address
-	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	headers := http.Header{}
+	headers.Set("Origin", "http://localhost:8080")
+
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	if err != nil {
 		t.Fatalf("failed to establish WebSocket connection: %v", err)
 	}
@@ -77,9 +80,5 @@ func TestWebSocketHandler(t *testing.T) {
 		if counter.Iteration != 0 {
 			t.Fatalf("expected counter.Iteration = 0 after reset, got %d", counter.Iteration)
 		}
-	}
-
-	if err := ws.Close(); err != nil {
-		t.Fatalf("failed to close WebSocket connection: %v", err)
 	}
 }

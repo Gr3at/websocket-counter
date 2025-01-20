@@ -11,6 +11,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var allowedOrigins = map[string]bool{
+	"http://localhost:8080": true,
+}
+
 func (s *Server) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Create and start a watcher.
 	var watch = watcher.New()
@@ -26,7 +30,8 @@ func (s *Server) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Start WS.
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return true
+			origin := r.Header.Get("Origin")
+			return allowedOrigins[origin]
 		},
 	}
 
