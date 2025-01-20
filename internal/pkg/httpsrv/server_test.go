@@ -2,9 +2,11 @@ package httpsrv
 
 import (
 	"encoding/json"
+	"fmt"
 	"goapp/internal/pkg/watcher"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -41,6 +43,7 @@ func TestHomeHandler(t *testing.T) {
 }
 
 func TestWebSocketHandler(t *testing.T) {
+	os.Setenv("ALLOWED_ORIGINS", "http://localhost:8080")
 	strChan := make(chan string)
 	server := New(strChan)
 
@@ -80,5 +83,48 @@ func TestWebSocketHandler(t *testing.T) {
 		if counter.Iteration != 0 {
 			t.Fatalf("expected counter.Iteration = 0 after reset, got %d", counter.Iteration)
 		}
+	}
+}
+
+type csrfTestCase struct {
+	allowedOrigins     string
+	origin             string
+	expectedStatusCode int
+}
+
+func TestWebSocketHandlerCSRF(t *testing.T) {
+	strChan := make(chan string)
+	server := New(strChan)
+
+	testServer := httptest.NewServer(http.HandlerFunc(server.handlerWebSocket))
+	defer testServer.Close()
+
+	address, _ := strings.CutPrefix(testServer.URL, "http")
+	wsURL := "ws" + address
+
+	testCases := []csrfTestCase{
+		{"http://localhost:8080", "http://localhost:8080", 101},
+		{"http://localhost:5000", "http://localhost:8080", http.StatusForbidden},
+		{"http://localhost:5000,http://test-domain.local:3000", "http://localhost:8010", http.StatusForbidden},
+		{"", "http://localhost:8010", http.StatusForbidden},
+		{"", "", http.StatusForbidden},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(fmt.Sprintf("testCase %v", testCase), func(t *testing.T) {
+			os.Setenv("ALLOWED_ORIGINS", testCase.allowedOrigins)
+
+			headers := http.Header{}
+			headers.Set("Origin", testCase.origin)
+
+			ws, response, _ := websocket.DefaultDialer.Dial(wsURL, headers)
+			if response.StatusCode != testCase.expectedStatusCode {
+				t.Fatalf("expected respone status code %d, got %d", testCase.expectedStatusCode, response.StatusCode)
+			}
+
+			if ws != nil {
+				defer ws.Close()
+			}
+		})
 	}
 }
