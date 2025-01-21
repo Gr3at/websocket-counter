@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"goapp/internal/pkg/config"
 	"goapp/internal/pkg/watcher"
 
 	"github.com/gorilla/websocket"
@@ -23,10 +24,16 @@ func (s *Server) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 	s.addWatcher(watch)
 	defer s.removeWatcher(watch)
 
+	conf := config.New()
+	origin := r.Header.Get("Origin")
+	if !conf.AllowedOrigins[origin] {
+		s.error(w, http.StatusForbidden, fmt.Errorf("not allowed origin"))
+		return
+	}
 	// Start WS.
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return true
+			return conf.AllowedOrigins[origin]
 		},
 	}
 
