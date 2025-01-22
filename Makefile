@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := goapp
 
 .PHONY: all
-all: clean test goapp
+all: clean test bench goapp
 
 .PHONY: goapp
 goapp:
@@ -16,3 +16,7 @@ clean:
 .PHONY: test
 test:
 	go test -cover ./...
+
+.PHONY: bench
+bench:
+	go test -bench=. -benchmem ./...
