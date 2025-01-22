@@ -26,14 +26,17 @@ func (s *Server) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conf := config.New()
 	origin := r.Header.Get("Origin")
-	if !conf.AllowedOrigins[origin] {
+	allOriginsAllowed := conf.AllowedOrigins["*"]
+	requestOriginAllowed := conf.AllowedOrigins[origin]
+	originAllowedImplicitOrExplicit := allOriginsAllowed || requestOriginAllowed
+	if !originAllowedImplicitOrExplicit {
 		s.error(w, http.StatusForbidden, fmt.Errorf("not allowed origin"))
 		return
 	}
 	// Start WS.
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return conf.AllowedOrigins[origin]
+			return originAllowedImplicitOrExplicit
 		},
 	}
 

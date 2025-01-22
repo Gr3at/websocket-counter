@@ -108,6 +108,7 @@ func TestWebSocketHandlerCSRF(t *testing.T) {
 		{"http://localhost:5000,http://test-domain.local:3000", "http://localhost:8010", http.StatusForbidden},
 		{"", "http://localhost:8010", http.StatusForbidden},
 		{"", "", http.StatusForbidden},
+		{"*", "", 101},
 	}
 
 	for _, testCase := range testCases {
