@@ -2,6 +2,18 @@
 
 An application for Go knowledge assessment.
 
+## Use
+
+To build the app and the cli client run `make`.
+To run the server (default: localhost:8080 + pprof on localhost:6060) run:
+```bash
+// use '*' to allow all origins
+// export ALLOWED_ORIGINS=*
+export ALLOWED_ORIGINS=http://localhost:8080,any-other-origin
+./bin/server
+```
+Run the cli client and open 20 concurent connections pointing to the server address: `./bin/client.exe -n 20 -server localhost:8080`
+
 ## Description
 
 This is a web application that utilises websockets. A client connects on `localhost:8080` and has three options: a) `open` a websocket connection that reads values from a counter b) `close` the websocket and c) reset the counter to zero. The counter is feeded from a random string generator. On WS session termination, statistics for terminated session are printed.
